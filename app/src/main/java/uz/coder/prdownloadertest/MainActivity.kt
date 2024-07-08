@@ -7,22 +7,30 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import com.downloader.PRDownloader
 import com.downloader.Status
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import uz.coder.prdownloadertest.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private val binding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
+    private val viewModel by lazy {
+        ViewModelProvider(this)[VM::class.java]
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+        Log.d(TAG, "onCreate: ")
         getBroadCastMy()
         val intExtra = intent.getIntExtra("id", 0)
         binding.btnDownload.setOnClickListener {
@@ -31,6 +39,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         binding.btnStart.setOnClickListener {
+            val url = binding.urlEtText.text.toString().trim { it <= ' ' }
             if (Status.RUNNING == PRDownloader.getStatus(intExtra)) {
                 PRDownloader.pause(intExtra)
                 return@setOnClickListener
@@ -40,8 +49,10 @@ class MainActivity : AppCompatActivity() {
                 PRDownloader.resume(intExtra)
                 return@setOnClickListener
             }
-            val url = binding.urlEtText.text.toString().trim { it <= ' ' }
-            ContextCompat.startForegroundService(this, DownloadService2.newIntent(this, url))
+            ContextCompat.startForegroundService(
+                this@MainActivity,
+                DownloadService2.newIntent(this@MainActivity, url)
+            )
         }
 
         binding.btnStop.setOnClickListener {
@@ -155,6 +166,10 @@ class MainActivity : AppCompatActivity() {
         } else {
             registerReceiver(brodcastMy, intentFilter)
         }
+    }
+
+    companion object {
+        private const val TAG = "MainActivity"
     }
 }
 

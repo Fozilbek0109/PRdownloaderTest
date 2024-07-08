@@ -26,7 +26,7 @@ import java.util.Locale
 class DownloadService2 : Service() {
     private var downloadID = 0
     private var path = ""
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.Main)
 
     override fun onCreate() {
         super.onCreate()
@@ -36,19 +36,16 @@ class DownloadService2 : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        log("sevice in work")
-        if (intent != null && intent.getBooleanExtra("stop", false)) {
-            PRDownloader.cancel(downloadID)
-            stopSelf()
-            log("servise s")
-            return START_STICKY
-        } else {
-            scope.launch {
-                val url = intent?.getStringExtra(URL_PATH) ?: ""
-                downloadFile(url)
-            }
-            return START_STICKY
-        }
+            log("sevice in work")
+            val url = intent?.getStringExtra(URL_PATH) ?: ""
+            downloadFile(url)
+//            if (intent != null && intent.getBooleanExtra("stop", false)) {
+//                PRDownloader.cancel(downloadID)
+//                stopSelf()
+//                log("servise s")
+//            }
+
+        return START_STICKY
     }
 
     override fun stopService(name: Intent?): Boolean {
@@ -56,11 +53,11 @@ class DownloadService2 : Service() {
         return super.stopService(name)
     }
 
-    private fun downloadFile(url: String) {
+    private  fun downloadFile(url: String) {
         if (Status.PAUSED == PRDownloader.getStatus(downloadID)) {
             PRDownloader.resume(downloadID)
         }
-        val filNotif =URLUtil.guessFileName(url, null, null)
+        val filNotif = URLUtil.guessFileName(url, null, null)
         val fileName = downloadSaveVideo(url)
         path = Utils.getRootDirPath(this)
         downloadID = PRDownloader.download(url, path, fileName)
@@ -113,8 +110,8 @@ class DownloadService2 : Service() {
                     stopSelf()
                 }
             })
-        val intent = Intent(this,MainActivity::class.java)
-        intent.putExtra("id",downloadID)
+        val intent = Intent(this, MainActivity::class.java)
+        intent.putExtra("id", downloadID)
         val activity = PendingIntent.getActivity(this, 30, intent, PendingIntent.FLAG_IMMUTABLE)
         activity.send()
 
